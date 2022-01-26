@@ -11,15 +11,245 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Loading data and generate date measure
 ```{r}
+library(readxl)
+library(tidyverse)
+library(SciViews)
+library(nleqslv)
+library(reshape)
+library(NLRoot)
+library(janitor)
 
+APM466_A1_data <- read_excel("~/Desktop/APM466_A1_data.xlsx")
+data <- APM466_A1_data
 ```
 
+```{r}
+#convert the date to class date formatting
+data[,3] = as.Date(data$`Issue date`,format='%Y/%m/%d')
+data[,5] = as.Date(data$`Maturity date`,format='%Y/%m/%d')
+
+
+#generate new variables to identify date of observation
+data <- data %>% 
+  mutate(date_1 = as.Date('2022/1/10',format='%Y/%m/%d')) %>%
+  mutate(date_2 = as.Date('2022/1/11',format='%Y/%m/%d')) %>%
+  mutate(date_3 = as.Date('2022/1/12',format='%Y/%m/%d')) %>%
+  mutate(date_4 = as.Date('2022/1/13',format='%Y/%m/%d')) %>%
+  mutate(date_5 = as.Date('2022/1/13',format='%Y/%m/%d')) %>%
+  mutate(date_6 = as.Date('2022/1/17',format='%Y/%m/%d')) %>%
+  mutate(date_7 = as.Date('2022/1/18',format='%Y/%m/%d')) %>%
+  mutate(date_8 = as.Date('2022/1/19',format='%Y/%m/%d')) %>%
+  mutate(date_9 = as.Date('2022/1/20',format='%Y/%m/%d')) %>%
+  mutate(date_10 = as.Date('2022/1/21',format='%Y/%m/%d'))
+
+#generate time to maturity according to observation date
+data$date_1_TTM <- as.numeric((data$`Maturity date`- data$date_1), units="days")/365.25
+data$date_2_TTM <- as.numeric((data$`Maturity date`- data$date_2), units="days")/365.25
+data$date_3_TTM <- as.numeric((data$`Maturity date`- data$date_3), units="days")/365.25
+data$date_4_TTM <- as.numeric((data$`Maturity date`- data$date_4), units="days")/365.25
+data$date_5_TTM <- as.numeric((data$`Maturity date`- data$date_5), units="days")/365.25
+data$date_6_TTM <- as.numeric((data$`Maturity date`- data$date_6), units="days")/365.25
+data$date_7_TTM <- as.numeric((data$`Maturity date`- data$date_7), units="days")/365.25
+data$date_8_TTM <- as.numeric((data$`Maturity date`- data$date_8), units="days")/365.25
+data$date_9_TTM <- as.numeric((data$`Maturity date`- data$date_9), units="days")/365.25
+data$date_10_TTM <- as.numeric((data$`Maturity date`- data$date_10), units="days")/365.25
+
+#notional: the payment occur at maturity
+N=100
+#change the coupon rate to per 100 dollars instead of percentage
+data$`Coupon rate` = (data$`Coupon rate`)*100
+```
 
 ## Question 4:
 # Part a: Yield to Maturity Curve
+```{r}
+#calculate the yield to maturity for each bond on each day.
+rep(NA, 10) -> ytm_bond_1 -> ytm_bond_2 -> ytm_bond_3 -> ytm_bond_4 -> ytm_bond_5 -> ytm_bond_6 -> ytm_bond_7 -> ytm_bond_8 -> ytm_bond_9 -> ytm_bond_10
+
+f_2 <- NIMfzero(function(x) -data[b,5+i]+c*exp(-t2_1*x)+(100+c)*exp(-t2_2*x),
+                function(x) c*exp(-t2_1*x)*(-t2_1)+(100+c)*exp(-t2_2*x)*(-t2_2), x0 = 0)
+
+(ytm_bond_1[1]= f_2[1])
+ytm_bond_1[1] = 0.009707351	
+
+install.packages(BFfzero)
+```
+
 # Part b: Yield/Spot Curve
 
 ```{r}
+#calculate the yield to maturity for each bond on each day. (YTM curve)
+rep(NA, 10) -> ytm_bond_1 -> ytm_bond_2 -> ytm_bond_3 -> ytm_bond_4 -> ytm_bond_5 -> ytm_bond_6 -> ytm_bond_7 -> ytm_bond_8 -> ytm_bond_9 -> ytm_bond_10
+
+#calculate the yield curve/spot curve for each day. (Yield/Spot curve)
+#Bootstrapping Method for finding the spot rate and plot the yield curve
+#the Bootstrapping method allows us to use coupon-payment bond to recover yield curve, 
+rep(NA, 10) -> yield_1 -> yield_2 -> yield_3 -> yield_4 -> yield_5 -> yield_6 -> yield_7 -> yield_8 -> yield_9 -> yield_10
+
+
+for (i in 1:10){#iteration over 10 days of observation
+  #find yield for each bond 
+  b=1
+  c=data[b,4]/2
+  #ytm
+  ytm_bond_1 = -ln(data[b,5+i]/(N+c))/(data[b,25+i])
+  #spot rate
+  yield_1[i] = -ln(data[b,5+i]/(N+c))/(data[b,25+i])
+  
+  b=2
+  c=data[b,4]/2
+  t2_1 = data[b,25+i] - 1 *0.5
+  t2_2 = data[b,25+i]
+  #ytm
+  f_2 <- NIMfzero(function(x) -data[b,5+i]+c*exp(-t2_1*x)+(100+c)*exp(-t2_2*x),
+                  function(x) c*exp(-t2_1*x)*(-t2_1)+(100+c)*exp(-t2_2*x)*(-t2_2), x0 = 0)
+  
+  #spot rate
+  yield_2[i] = (-ln((data[b,5+i]-c*exp(-t2_1*yield_1[i]))/(100+c)))/t2_2
+  
+
+  b=3
+  c=data[b,4]/2
+  t3_1 = data[b,25+i] - 2 *0.5
+  t3_2 = data[b,25+i] - 1 *0.5
+  t3_3 = data[b,25+i] 
+  yield_3[i] = (-ln((data[b,5+i]-c*exp(-t3_1*yield_1[i])-c*exp(-t3_2*yield_2[i]))
+                       /(100+c)))/t3_3
+  b=4
+  c=data[b,4]/2
+  t4_1 = data[b,25+i] - 3 *0.5
+  t4_2 = data[b,25+i] - 2 *0.5
+  t4_3 = data[b,25+i] - 1 *0.5
+  t4_4 = data[b,25+i] 
+  yield_4[i] = (-ln((data[b,5+i]-c*exp(-t4_1*yield_1[i])
+                        -c*exp(-t4_2*yield_2[i])
+                        -c*exp(-t4_3*yield_3[i]))/
+                         (100+c)))/t4_4
+  
+  b=5
+  c=data[b,4]/2
+  t5_1 = data[b,25+i] - 4 *0.5
+  t5_2 = data[b,25+i] - 3 *0.5
+  t5_3 = data[b,25+i] - 2 *0.5
+  t5_4 = data[b,25+i] - 1 *0.5
+  t5_5 = data[b,25+i] 
+  yield_5[i] = (-ln((data[b,5+i]-c*exp(-t5_1*yield_1[i])
+                        -c*exp(-t5_2*yield_2[i])
+                        -c*exp(-t5_3*yield_3[i])
+                        -c*exp(-t5_3*yield_4[i]))/
+                         (100+c)))/t5_5
+  
+  b=6
+  c=data[b,4]/2
+  t6_1 = data[b,25+i] - 5 *0.5
+  t6_2 = data[b,25+i] - 4 *0.5
+  t6_3 = data[b,25+i] - 3 *0.5
+  t6_4 = data[b,25+i] - 2 *0.5
+  t6_5 = data[b,25+i] - 1 *0.5
+  t6_6 = data[b,25+i] 
+  yield_6[i] = (-ln((data[b,5+i]-c*exp(-t6_1*yield_1[i])
+                        -c*exp(-t6_2*yield_2[i])
+                        -c*exp(-t6_3*yield_3[i])
+                        -c*exp(-t6_4*yield_4[i])
+                        -c*exp(-t6_5*yield_5[i]))/
+                         (100+c)))/t6_5
+  b=7
+  c=data[b,4]/2
+  t7_1 = data[b,25+i] - 6 *0.5
+  t7_2 = data[b,25+i] - 5 *0.5
+  t7_3 = data[b,25+i] - 4 *0.5
+  t7_4 = data[b,25+i] - 3 *0.5
+  t7_5 = data[b,25+i] - 2 *0.5
+  t7_6 = data[b,25+i] - 1 *0.5
+  t7_7 = data[b,25+i] 
+  yield_7[i] = (-ln((data[b,5+i]-c*exp(-t7_1*yield_1[i])
+                        -c*exp(-t7_2*yield_2[i])
+                        -c*exp(-t7_3*yield_3[i])
+                        -c*exp(-t7_4*yield_4[i])
+                        -c*exp(-t7_5*yield_5[i])
+                        -c*exp(-t7_6*yield_6[i]))/
+                         (100+c)))/t7_7
+  
+  b=8
+  c=data[b,4]/2
+  t8_1 = data[b,25+i] - 7 *0.5
+  t8_2 = data[b,25+i] - 6 *0.5
+  t8_3 = data[b,25+i] - 5 *0.5
+  t8_4 = data[b,25+i] - 4 *0.5
+  t8_5 = data[b,25+i] - 3 *0.5
+  t8_6 = data[b,25+i] - 2 *0.5
+  t8_7 = data[b,25+i] - 1 *0.5
+  t8_8 = data[b,25+i] 
+  yield_8[i] = (-ln((data[b,5+i]-c*exp(-t8_1*yield_1[i])
+                        -c*exp(-t8_2*yield_2[i])
+                        -c*exp(-t8_3*yield_3[i])
+                        -c*exp(-t8_4*yield_4[i])
+                        -c*exp(-t8_5*yield_5[i])
+                        -c*exp(-t8_6*yield_6[i])
+                        -c*exp(-t8_6*yield_7[i]))/
+                         (100+c)))/t8_8
+  
+  b=9
+  c=data[b,4]/2
+  t9_1 = data[b,25+i] - 8 *0.5
+  t9_2 = data[b,25+i] - 7 *0.5
+  t9_3 = data[b,25+i] - 6 *0.5
+  t9_4 = data[b,25+i] - 5 *0.5
+  t9_5 = data[b,25+i] - 4 *0.5
+  t9_6 = data[b,25+i] - 3 *0.5
+  t9_7 = data[b,25+i] - 2 *0.5
+  t9_8 = data[b,25+i] - 1 *0.5
+  t9_9 = data[b,25+i] 
+  yield_9[i] = (-ln((data[b,5+i]-c*exp(-t9_1*yield_1[i])
+                        -c*exp(-t9_2*yield_2[i])
+                        -c*exp(-t9_3*yield_3[i])
+                        -c*exp(-t9_4*yield_4[i])
+                        -c*exp(-t9_5*yield_5[i])
+                        -c*exp(-t9_6*yield_6[i])
+                        -c*exp(-t9_6*yield_7[i])
+                        -c*exp(-t9_6*yield_8[i]))/
+                         (100+c)))/t9_9
+  
+  b=10
+  c=data[b,4]/2
+  t10_1 = data[b,25+i] - 9 *0.5
+  t10_2 = data[b,25+i] - 8 *0.5
+  t10_3 = data[b,25+i] - 7 *0.5
+  t10_4 = data[b,25+i] - 6 *0.5
+  t10_5 = data[b,25+i] - 5 *0.5
+  t10_6 = data[b,25+i] - 4 *0.5
+  t10_7 = data[b,25+i] - 3 *0.5
+  t10_8 = data[b,25+i] - 2 *0.5
+  t10_9 = data[b,25+i] - 1 *0.5
+  t10_10 = data[b,25+i] 
+  yield_10[i] = (-ln((data[b,5+i]-c*exp(-t10_1*yield_1[i])
+                        -c*exp(-t10_2*yield_2[i])
+                        -c*exp(-t10_3*yield_3[i])
+                        -c*exp(-t10_4*yield_4[i])
+                        -c*exp(-t10_5*yield_5[i])
+                        -c*exp(-t10_6*yield_6[i])
+                        -c*exp(-t10_6*yield_7[i])
+                        -c*exp(-t10_6*yield_8[i])
+                        -c*exp(-t10_6*yield_9[i]))/
+                         (100+c)))/t10_10
+}
+
+
+yield_table <-cbind(yield_1, yield_2, yield_3, yield_4, yield_5, 
+            yield_6, yield_7, yield_8, yield_9, yield_10)
+
+
+rep(NA, 10) -> yield_date_1 -> yield_date_2 -> yield_date_3 -> yield_date_4 -> yield_date_5 -> yield_date_6 -> yield_date_7 -> yield_date_8 -> yield_date_9 -> yield_date_10
+
+yield_date <- cbind(yield_date_1 = yield_table[1,], yield_date_1 = yield_table[2,], 
+                  yield_date_1 = yield_table[3,], yield_date_1 = yield_table[4,],
+                  yield_date_1 = yield_table[5,], yield_date_1 = yield_table[6,],
+                  yield_date_1 = yield_table[7,], yield_date_1 = yield_table[8,],
+                  yield_date_1 = yield_table[9,], yield_date_1 = yield_table[10,])
+
+
+
+
 
 ```
 
@@ -32,6 +262,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Question 5:
 # Part a: Covariance Matrix
+```{r}
+#find the covariance matrix for the log-returns of yield
+```
+
 # Part b: Eigenvalue and Eigenvector of Covariance Matrix
 ```{r}
 
