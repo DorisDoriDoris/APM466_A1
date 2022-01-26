@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Loading data and generate date measure
-```{r}
+```{r Setup, message=FALSE}
 library(readxl)
 library(tidyverse)
 library(SciViews)
@@ -18,9 +18,12 @@ library(nleqslv)
 library(reshape)
 library(NLRoot)
 library(janitor)
+library(WriteXLS)
 
+#load in data and save in R 
 APM466_A1_data <- read_excel("~/Desktop/APM466_A1_data.xlsx")
-data <- APM466_A1_data
+WriteXLS(APM466_A1_data, ExcelFileName = "APM466_A1_data.xlsx")
+data <- APM466_A1_data 
 ```
 
 ```{r}
@@ -61,7 +64,7 @@ data$`Coupon rate` = (data$`Coupon rate`)*100
 ```
 
 ## Question 4:
-# Part a: Yield to Maturity Curve
+### Part a: Yield to Maturity Curve
 ```{r}
 #calculate the yield to maturity for each bond on each day.
 rep(NA, 10) -> ytm_bond_1 -> ytm_bond_2 -> ytm_bond_3 -> ytm_bond_4 -> ytm_bond_5 -> ytm_bond_6 -> ytm_bond_7 -> ytm_bond_8 -> ytm_bond_9 -> ytm_bond_10
@@ -75,7 +78,7 @@ ytm_bond_1[1] = 0.009707351
 install.packages(BFfzero)
 ```
 
-# Part b: Yield/Spot Curve
+### Part b: Yield/Spot Curve
 
 ```{r}
 #calculate the yield to maturity for each bond on each day. (YTM curve)
@@ -254,19 +257,19 @@ yield_date <- cbind(yield_date_1 = yield_table[1,], yield_date_1 = yield_table[2
 ```
 
 
-# Part c: Forward Rate Curve
+### Part c: Forward Rate Curve
 ```{r}
 
 ```
 
 
 ## Question 5:
-# Part a: Covariance Matrix
+### Part a: Covariance Matrix
 ```{r}
 #find the covariance matrix for the log-returns of yield
 ```
 
-# Part b: Eigenvalue and Eigenvector of Covariance Matrix
+### Part b: Eigenvalue and Eigenvector of Covariance Matrix
 ```{r}
 
 ```
