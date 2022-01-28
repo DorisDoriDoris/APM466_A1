@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ## Loading data and generate date measure
 ```{r Setup, message=FALSE}
 library(readxl)
@@ -19,7 +20,6 @@ library(reshape)
 library(NLRoot)
 library(janitor)
 library(WriteXLS)
-library(dplyr)
 
 #load in data and save in R
 APM466_A1_data <- read_excel("~/Desktop/APM466_A1_data.xlsx")
@@ -47,16 +47,16 @@ data <- data %>%
   mutate(date_10 = as.Date('2022/1/21',format='%Y/%m/%d'))
 
 #generate time to maturity according to observation date
-data$date_1_TTM <- as.numeric((data$`Maturity date`- data$date_1), units="days")/365
-data$date_2_TTM <- as.numeric((data$`Maturity date`- data$date_2), units="days")/365
-data$date_3_TTM <- as.numeric((data$`Maturity date`- data$date_3), units="days")/365
-data$date_4_TTM <- as.numeric((data$`Maturity date`- data$date_4), units="days")/365
-data$date_5_TTM <- as.numeric((data$`Maturity date`- data$date_5), units="days")/365
-data$date_6_TTM <- as.numeric((data$`Maturity date`- data$date_6), units="days")/365
-data$date_7_TTM <- as.numeric((data$`Maturity date`- data$date_7), units="days")/365
-data$date_8_TTM <- as.numeric((data$`Maturity date`- data$date_8), units="days")/365
-data$date_9_TTM <- as.numeric((data$`Maturity date`- data$date_9), units="days")/365
-data$date_10_TTM <- as.numeric((data$`Maturity date`- data$date_10), units="days")/365
+data$date_1_TTM <- as.numeric((data$`Maturity date`- data$date_1), units="days")/365.25
+data$date_2_TTM <- as.numeric((data$`Maturity date`- data$date_2), units="days")/365.25
+data$date_3_TTM <- as.numeric((data$`Maturity date`- data$date_3), units="days")/365.25
+data$date_4_TTM <- as.numeric((data$`Maturity date`- data$date_4), units="days")/365.25
+data$date_5_TTM <- as.numeric((data$`Maturity date`- data$date_5), units="days")/365.25
+data$date_6_TTM <- as.numeric((data$`Maturity date`- data$date_6), units="days")/365.25
+data$date_7_TTM <- as.numeric((data$`Maturity date`- data$date_7), units="days")/365.25
+data$date_8_TTM <- as.numeric((data$`Maturity date`- data$date_8), units="days")/365.25
+data$date_9_TTM <- as.numeric((data$`Maturity date`- data$date_9), units="days")/365.25
+data$date_10_TTM <- as.numeric((data$`Maturity date`- data$date_10), units="days")/365.25
 
 #notional: the payment occur at maturity
 N=100
@@ -90,7 +90,7 @@ rep(NA, 10) -> ytm_bond_1 -> ytm_bond_2 -> ytm_bond_3 -> ytm_bond_4 -> ytm_bond_
 #calculate the yield curve/spot curve for each day. (Yield/Spot curve)
 #Bootstrapping Method for finding the spot rate and plot the yield curve
 #the Bootstrapping method allows us to use coupon-payment bond to recover yield curve, 
-rep(NA, 10) -> spot_1 -> spot_2 -> spot_3 -> spot_4 -> spot_5 -> spot_6 -> spot_7 -> spot_8 -> spot_9 -> spot_10 -> spot_11
+rep(NA, 10) -> yield_1 -> yield_2 -> yield_3 -> yield_4 -> yield_5 -> yield_6 -> yield_7 -> yield_8 -> yield_9 -> yield_10 -> yield_11
 
 
 for (i in 1:10){#iteration over 10 days of observation
@@ -101,7 +101,7 @@ for (i in 1:10){#iteration over 10 days of observation
   ytm_bond_1[i]= as.numeric(-ln(((data[b,5+i]))/(N+c))
                             /(data[b,25+i]))
   #spot rate
-  spot_1[i] = as.numeric(-ln((data[b,5+i])/(N+c))/(data[b,25+i]))
+  yield_1[i] = as.numeric(-ln((data[b,5+i])/(N+c))/(data[b,25+i]))
   
   b=2;c=data[b,4]/2
   for (j in 1:2){assign(paste("t2", j, sep="_"), data[b,25+i]-(2-j)*0.5)} 
@@ -110,7 +110,7 @@ for (i in 1:10){#iteration over 10 days of observation
           function(x) c*exp(-t2_1*x)*(-t2_1)+(100+c)*exp(-t2_2*x)*(-t2_2), x0 = 0)
   ytm_bond_2[i]= as.numeric(f)
   #spot rate
-  spot_2[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t2_1*spot_1[i]))/(100+c)))/t2_2)
+  yield_2[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t2_1*yield_1[i]))/(100+c)))/t2_2)
 
   b=3;c=data[b,4]/2
   for (j in 1:3){assign(paste("t3", j, sep="_"), data[b,25+i]-(3-j)*0.5)}  
@@ -120,7 +120,7 @@ for (i in 1:10){#iteration over 10 days of observation
                       +(100+c)*exp(-t3_3*x)*(-t3_3)), x0 = 0)
   ytm_bond_3[i]= as.numeric(f)
   #spot rate
-  spot_3[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t3_1*spot_1[i])-c*exp(-t3_2*spot_2[i]))
+  yield_3[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t3_1*yield_1[i])-c*exp(-t3_2*yield_2[i]))
                        /(100+c)))/t3_3)
  
   b=4;c=data[b,4]/2
@@ -132,9 +132,9 @@ for (i in 1:10){#iteration over 10 days of observation
                        c*exp(-t4_3*x)*(-t4_3)+(100+c)*exp(-t4_4*x)*(-t4_4)), x0 = 0)
   ytm_bond_4[i] = as.numeric(f)
   #spot rate
-  spot_4[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t4_1*spot_1[i])
-                     -c*exp(-t4_2*spot_2[i])
-                     -c*exp(-t4_3*spot_3[i]))/(100+c)))/t4_4)
+  yield_4[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t4_1*yield_1[i])
+                     -c*exp(-t4_2*yield_2[i])
+                     -c*exp(-t4_3*yield_3[i]))/(100+c)))/t4_4)
   
   b=5;c=data[b,4]/2
   for (j in 1:5){assign(paste("t5", j, sep="_"), data[b,25+i]-(5-j)*0.5)}  
@@ -146,10 +146,10 @@ for (i in 1:10){#iteration over 10 days of observation
                          (100+c)*exp(-t5_5*x)*(-t5_5)), x0 = 0)
   ytm_bond_5[i]= as.numeric(f)
   #spot rate
-  spot_5[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t5_1*spot_1[i])
-                        -c*exp(-t5_2*spot_2[i])
-                        -c*exp(-t5_3*spot_3[i])
-                        -c*exp(-t5_3*spot_4[i]))/
+  yield_5[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t5_1*yield_1[i])
+                        -c*exp(-t5_2*yield_2[i])
+                        -c*exp(-t5_3*yield_3[i])
+                        -c*exp(-t5_3*yield_4[i]))/
                          (100+c)))/t5_5)
   
   b=6; c=data[b,4]/2
@@ -162,11 +162,11 @@ for (i in 1:10){#iteration over 10 days of observation
                        c*exp(-t6_5*x)*(-t6_5)+(100+c)*exp(-t6_6*x)*(-t6_6)), x0 = 0)
   ytm_bond_6[i] = as.numeric(f)
   #spot rate
-  spot_6[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t6_1*spot_1[i])
-                        -c*exp(-t6_2*spot_2[i])
-                        -c*exp(-t6_3*spot_3[i])
-                        -c*exp(-t6_4*spot_4[i])
-                        -c*exp(-t6_5*spot_5[i]))/
+  yield_6[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t6_1*yield_1[i])
+                        -c*exp(-t6_2*yield_2[i])
+                        -c*exp(-t6_3*yield_3[i])
+                        -c*exp(-t6_4*yield_4[i])
+                        -c*exp(-t6_5*yield_5[i]))/
                          (100+c)))/t6_5)
   
   b=7; c=data[b,4]/2
@@ -181,12 +181,12 @@ for (i in 1:10){#iteration over 10 days of observation
                        (100+c)*exp(-t7_7*x)*(-t7_7)), x0 = 0)
   ytm_bond_7[i]= as.numeric(f)
   #spot rate
-  spot_7[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t7_1*spot_1[i])
-                        -c*exp(-t7_2*spot_2[i])
-                        -c*exp(-t7_3*spot_3[i])
-                        -c*exp(-t7_4*spot_4[i])
-                        -c*exp(-t7_5*spot_5[i])
-                        -c*exp(-t7_6*spot_6[i]))/
+  yield_7[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t7_1*yield_1[i])
+                        -c*exp(-t7_2*yield_2[i])
+                        -c*exp(-t7_3*yield_3[i])
+                        -c*exp(-t7_4*yield_4[i])
+                        -c*exp(-t7_5*yield_5[i])
+                        -c*exp(-t7_6*yield_6[i]))/
                          (100+c)))/t7_7)
   
   b=8;c=data[b,4]/2
@@ -201,13 +201,13 @@ for (i in 1:10){#iteration over 10 days of observation
                        c*exp(-t8_7*x)*(-t8_7)+(100+c)*exp(-t8_8*x)*(-t8_8)), x0 = 0)
   ytm_bond_8[i]= as.numeric(f)
   #spot rate
-  spot_8[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t8_1*spot_1[i])
-                        -c*exp(-t8_2*spot_2[i])
-                        -c*exp(-t8_3*spot_3[i])
-                        -c*exp(-t8_4*spot_4[i])
-                        -c*exp(-t8_5*spot_5[i])
-                        -c*exp(-t8_6*spot_6[i])
-                        -c*exp(-t8_7*spot_7[i]))/
+  yield_8[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t8_1*yield_1[i])
+                        -c*exp(-t8_2*yield_2[i])
+                        -c*exp(-t8_3*yield_3[i])
+                        -c*exp(-t8_4*yield_4[i])
+                        -c*exp(-t8_5*yield_5[i])
+                        -c*exp(-t8_6*yield_6[i])
+                        -c*exp(-t8_7*yield_7[i]))/
                          (100+c)))/t8_8)
   
   b=9;c=data[b,4]/2
@@ -224,14 +224,14 @@ for (i in 1:10){#iteration over 10 days of observation
                        (100+c)*exp(-t9_9*x)*(-t9_9)), x0 = 0)
   ytm_bond_9[i]= as.numeric(f)
   #spot rate
-  spot_9[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t9_1*spot_1[i])
-                        -c*exp(-t9_2*spot_2[i])
-                        -c*exp(-t9_3*spot_3[i])
-                        -c*exp(-t9_4*spot_4[i])
-                        -c*exp(-t9_5*spot_5[i])
-                        -c*exp(-t9_6*spot_6[i])
-                        -c*exp(-t9_7*spot_7[i])
-                        -c*exp(-t9_8*spot_8[i]))/
+  yield_9[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t9_1*yield_1[i])
+                        -c*exp(-t9_2*yield_2[i])
+                        -c*exp(-t9_3*yield_3[i])
+                        -c*exp(-t9_4*yield_4[i])
+                        -c*exp(-t9_5*yield_5[i])
+                        -c*exp(-t9_6*yield_6[i])
+                        -c*exp(-t9_7*yield_7[i])
+                        -c*exp(-t9_8*yield_8[i]))/
                          (100+c)))/t9_9)
   
   b=10;c=data[b,4]/2
@@ -248,15 +248,15 @@ for (i in 1:10){#iteration over 10 days of observation
                        c*exp(-t10_9*x)*(-t10_9)+(100+c)*exp(-t10_10*x)*(-t10_10)), x0 = 0)
   ytm_bond_10[i]= as.numeric(f)
   #spot rate
-  spot_10[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t10_1*spot_1[i])
-                        -c*exp(-t10_2*spot_2[i])
-                        -c*exp(-t10_3*spot_3[i])
-                        -c*exp(-t10_4*spot_4[i])
-                        -c*exp(-t10_5*spot_5[i])
-                        -c*exp(-t10_6*spot_6[i])
-                        -c*exp(-t10_7*spot_7[i])
-                        -c*exp(-t10_8*spot_8[i])
-                        -c*exp(-t10_9*spot_9[i]))/
+  yield_10[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t10_1*yield_1[i])
+                        -c*exp(-t10_2*yield_2[i])
+                        -c*exp(-t10_3*yield_3[i])
+                        -c*exp(-t10_4*yield_4[i])
+                        -c*exp(-t10_5*yield_5[i])
+                        -c*exp(-t10_6*yield_6[i])
+                        -c*exp(-t10_7*yield_7[i])
+                        -c*exp(-t10_8*yield_8[i])
+                        -c*exp(-t10_9*yield_9[i]))/
                          (100+c)))/t10_10)
   
   b=11;c=data[b,4]/2
@@ -275,16 +275,16 @@ for (i in 1:10){#iteration over 10 days of observation
                        (100+c)*exp(-t11_11*x)*(-t11_11)), x0 = 0)
   ytm_bond_11[i]= as.numeric(f)
   #spot rate
-  spot_11[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t11_1*spot_1[i])
-                        -c*exp(-t11_2*spot_2[i])
-                        -c*exp(-t11_3*spot_3[i])
-                        -c*exp(-t11_4*spot_4[i])
-                        -c*exp(-t11_5*spot_5[i])
-                        -c*exp(-t11_6*spot_6[i])
-                        -c*exp(-t11_7*spot_7[i])
-                        -c*exp(-t11_8*spot_8[i])
-                        -c*exp(-t11_9*spot_9[i])
-                        -c*exp(-t11_10*spot_10[i]))/
+  yield_11[i] = as.numeric((-ln(((data[b,5+i])-c*exp(-t11_1*yield_1[i])
+                        -c*exp(-t11_2*yield_2[i])
+                        -c*exp(-t11_3*yield_3[i])
+                        -c*exp(-t11_4*yield_4[i])
+                        -c*exp(-t11_5*yield_5[i])
+                        -c*exp(-t11_6*yield_6[i])
+                        -c*exp(-t11_7*yield_7[i])
+                        -c*exp(-t11_8*yield_8[i])
+                        -c*exp(-t11_9*yield_9[i])
+                        -c*exp(-t11_10*yield_10[i]))/
                          (100+c)))/t11_11)
 }
 ```
@@ -301,19 +301,20 @@ for (i in 1:10){
 
 ytm_day_table <-data.frame(bond_order =c(1:11), ytm_day_1, ytm_day_2, ytm_day_3, ytm_day_4, ytm_day_5, ytm_day_6, ytm_day_7, ytm_day_8, ytm_day_8, ytm_day_10)
 
+maturity_time <- data$`Maturity date`
 
-plot(x=data$date_1_TTM, y= ytm_day_1, type = "l", ylim = c(0.005,0.025), col = c(1),
+plot(x=maturity_time, y= ytm_day_1, type = "l", ylim = c(0.005,0.025), col = c(1),
      main = "Yield-to-Maturity Curve for each day (Jan.10 to Jan.21)",
      xlab = "Duration", ylab="YTM")
-lines(x=data$date_2_TTM, y= ytm_day_2, col = c(2))
-lines(x=data$date_3_TTM, y= ytm_day_3, col = c(3))
-lines(x=data$date_4_TTM, y= ytm_day_4, col = c(4))
-lines(x=data$date_5_TTM, y= ytm_day_5, col = c(5))
-lines(x=data$date_6_TTM, y= ytm_day_6, col = c(6))
-lines(x=data$date_7_TTM, y= ytm_day_7, col = c(7))
-lines(x=data$date_8_TTM, y= ytm_day_8, col = c(8))
-lines(x=data$date_9_TTM, y= ytm_day_9, col = c(9))
-lines(x=data$date_10_TTM, y= ytm_day_10, col = c(10))
+lines(x=maturity_time, y= ytm_day_2, col = c(2))
+lines(x=maturity_time, y= ytm_day_3, col = c(3))
+lines(x=maturity_time, y= ytm_day_4, col = c(4))
+lines(x=maturity_time, y= ytm_day_5, col = c(5))
+lines(x=maturity_time, y= ytm_day_6, col = c(6))
+lines(x=maturity_time, y= ytm_day_7, col = c(7))
+lines(x=maturity_time, y= ytm_day_8, col = c(8))
+lines(x=maturity_time, y= ytm_day_9, col = c(9))
+lines(x=maturity_time, y= ytm_day_10, col = c(10))
 legend("bottomright", legend =c("Jan-10-2022", "Jan-11-2022", "Jan-12-2022", "Jan-13-2022", "Jan-14-2022", "Jan-17-2022", "Jan-18-2022", "Jan-19-2022", "Jan-20-2022","Jan-21-2022"), col=c(1:10), lty = 1:1, cex =0.5)
 
 ```
@@ -351,7 +352,9 @@ legend("bottomright", legend =c("Jan-10-2022", "Jan-11-2022", "Jan-12-2022", "Ja
 
 ### Part c: Forward Rate Curve
 ```{r}
-
+for (i in 1:10){
+  
+}
 ```
 
 
@@ -359,7 +362,6 @@ legend("bottomright", legend =c("Jan-10-2022", "Jan-11-2022", "Jan-12-2022", "Ja
 ### Part a: Covariance Matrix
 ```{r}
 #find the covariance matrix for the log-returns of yield
-
 ```
 
 ```{r}
