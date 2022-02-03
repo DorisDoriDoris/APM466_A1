@@ -5,11 +5,6 @@ date: "1/26/2022"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
 ## Loading data and generate date measure
 ```{r Setup, message=FALSE}
 library(readxl)
@@ -32,7 +27,6 @@ data <- APM466_A1_data
 data[,3] = as.Date(data$`Issue date`,format='%Y/%m/%d')
 data[,5] = as.Date(data$`Maturity date`,format='%Y/%m/%d')
 
-
 #generate new variables to identify date of observation
 data <- data %>% 
   mutate(date_1 = as.Date('2022/1/10',format='%Y/%m/%d')) %>%
@@ -47,16 +41,16 @@ data <- data %>%
   mutate(date_10 = as.Date('2022/1/21',format='%Y/%m/%d'))
 
 #generate time to maturity according to observation date
-data$date_1_TTM <- as.numeric((data$`Maturity date`- data$date_1), units="days")/365.25
-data$date_2_TTM <- as.numeric((data$`Maturity date`- data$date_2), units="days")/365.25
-data$date_3_TTM <- as.numeric((data$`Maturity date`- data$date_3), units="days")/365.25
-data$date_4_TTM <- as.numeric((data$`Maturity date`- data$date_4), units="days")/365.25
-data$date_5_TTM <- as.numeric((data$`Maturity date`- data$date_5), units="days")/365.25
-data$date_6_TTM <- as.numeric((data$`Maturity date`- data$date_6), units="days")/365.25
-data$date_7_TTM <- as.numeric((data$`Maturity date`- data$date_7), units="days")/365.25
-data$date_8_TTM <- as.numeric((data$`Maturity date`- data$date_8), units="days")/365.25
-data$date_9_TTM <- as.numeric((data$`Maturity date`- data$date_9), units="days")/365.25
-data$date_10_TTM <- as.numeric((data$`Maturity date`- data$date_10), units="days")/365.25
+data$date_1_TTM <- as.numeric((data$`Maturity date`- data$date_1), units="days")/365
+data$date_2_TTM <- as.numeric((data$`Maturity date`- data$date_2), units="days")/365
+data$date_3_TTM <- as.numeric((data$`Maturity date`- data$date_3), units="days")/365
+data$date_4_TTM <- as.numeric((data$`Maturity date`- data$date_4), units="days")/365
+data$date_5_TTM <- as.numeric((data$`Maturity date`- data$date_5), units="days")/365
+data$date_6_TTM <- as.numeric((data$`Maturity date`- data$date_6), units="days")/365
+data$date_7_TTM <- as.numeric((data$`Maturity date`- data$date_7), units="days")/365
+data$date_8_TTM <- as.numeric((data$`Maturity date`- data$date_8), units="days")/365
+data$date_9_TTM <- as.numeric((data$`Maturity date`- data$date_9), units="days")/365
+data$date_10_TTM <- as.numeric((data$`Maturity date`- data$date_10), units="days")/365
 
 #notional: the payment occur at maturity
 N=100
@@ -98,12 +92,12 @@ for (i in 1:10){#iteration over 10 days of observation
   
   b=1;c=data[b,4]/2
   #ytm
-  ytm_bond_1[i]= as.numeric(-ln(((data[b,5+i]))/(N+c))
-                            /(data[b,25+i]))
+  ytm_bond_1[i]= as.numeric(-ln(((data[b,5+i]))/(N+c))/(data[b,25+i]))
   #spot rate
   yield_1[i] = as.numeric(-ln((data[b,5+i])/(N+c))/(data[b,25+i]))
   
   b=2;c=data[b,4]/2
+  #time for each coupon and principle payment
   for (j in 1:2){assign(paste("t2", j, sep="_"), data[b,25+i]-(2-j)*0.5)} 
   #ytm
   f <- NW(function(x) (-1)*(data[b,5+i])+c*exp(-t2_1*x)+(100+c)*exp(-t2_2*x),
@@ -167,7 +161,7 @@ for (i in 1:10){#iteration over 10 days of observation
                         -c*exp(-t6_3*yield_3[i])
                         -c*exp(-t6_4*yield_4[i])
                         -c*exp(-t6_5*yield_5[i]))/
-                         (100+c)))/t6_5)
+                         (100+c)))/t6_6)
   
   b=7; c=data[b,4]/2
   for (j in 1:7){assign(paste("t7", j, sep="_"), data[b,25+i]-(7-j)*0.5)}
@@ -295,6 +289,7 @@ for (i in 1:10){#iteration over 10 days of observation
 ytm_table <-cbind(ytm_bond_1, ytm_bond_2, ytm_bond_3, ytm_bond_4,
                    ytm_bond_5, ytm_bond_6, ytm_bond_7, ytm_bond_8, 
                    ytm_bond_9, ytm_bond_10, ytm_bond_11)
+#view(ytm_table)
 for (i in 1:10){
   assign(paste("ytm_day", i, sep="_"), ytm_table[i,])
 }
@@ -305,7 +300,7 @@ maturity_time <- data$`Maturity date`
 
 plot(x=maturity_time, y= ytm_day_1, type = "l", ylim = c(0.005,0.025), col = c(1),
      main = "Yield-to-Maturity Curve for each day (Jan.10 to Jan.21)",
-     xlab = "Duration", ylab="YTM")
+     xlab = "Maturity Date", ylab="YTM")
 lines(x=maturity_time, y= ytm_day_2, col = c(2))
 lines(x=maturity_time, y= ytm_day_3, col = c(3))
 lines(x=maturity_time, y= ytm_day_4, col = c(4))
@@ -318,8 +313,12 @@ lines(x=maturity_time, y= ytm_day_10, col = c(10))
 legend("bottomright", legend =c("Jan-10-2022", "Jan-11-2022", "Jan-12-2022", "Jan-13-2022", "Jan-14-2022", "Jan-17-2022", "Jan-18-2022", "Jan-19-2022", "Jan-20-2022","Jan-21-2022"), col=c(1:10), lty = 1:1, cex =0.5)
 
 ```
+Interpolation technique: 
+We applied the linear interpolation for the curve, such that we connect each consecutive points with straight line. The points on the line will be the value for those maturity date as linear combination of calculated consecutive points. 
 
-### Part b: Yield/Spot Curve
+
+
+### Part b: Spot Curve
 ```{r}
 #plot spot curve
 spot_table <-data.frame(yield_1, yield_2, yield_3, yield_4, yield_5, 
@@ -346,13 +345,23 @@ lines(x=data$date_9_TTM, y= spot_day_9, col = c(9))
 lines(x=data$date_10_TTM, y= spot_day_10, col = c(10))
 legend("bottomright", legend =c("Jan-10-2022", "Jan-11-2022", "Jan-12-2022", "Jan-13-2022", "Jan-14-2022", "Jan-17-2022", "Jan-18-2022", "Jan-19-2022", "Jan-20-2022","Jan-21-2022"), col=c(1:10), lty = 1:1, cex =0.5)
 
-
 ```
 
 
 ### Part c: Forward Rate Curve
 ```{r}
+#generate empty list for each date forward rate of size 4:
+# 1yr-1yr, 1yr-2yr, 1yr-3yr, 1yr-4yr
+#meaning future one year rate in 2,3,4 year from now
+
+view(spot_table)
+
+for (j in 1:10){assign(paste("forward", j, sep="_"), rep(NA, 4))}
+
+
 for (i in 1:10){
+  
+  
   
 }
 ```
@@ -362,10 +371,41 @@ for (i in 1:10){
 ### Part a: Covariance Matrix
 ```{r}
 #find the covariance matrix for the log-returns of yield
+rep(NA, 9) -> X_1 -> X_2 -> X_3 -> X_4 -> X_5
+rep(NA, 10) -> r_1 -> r_2 -> r_3 -> r_4 -> r_5
+maturity_time <- as.numeric(data$`Maturity date` - data$date_1)/365
+
+for (j in 1:10){
+  slope_1 = (ytm_table[j,3] - ytm_table[j,2])/(maturity_time[3] - maturity_time[2])
+  r_1[j]= slope_1*1 + ytm_table[j,2]- slope_1*maturity_time[2]
+  slope_2 = (ytm_table[j,5] - ytm_table[j,4])/(maturity_time[5] - maturity_time[4])
+  r_2[j]= slope_2*2 + ytm_table[j,4]- slope_2*maturity_time[4]
+  slope_3 = (ytm_table[j,7] - ytm_table[j,6])/(maturity_time[7] - maturity_time[6])
+  r_3[j]= slope_3*3 + ytm_table[j,6]- slope_3*maturity_time[6]
+  slope_4 = (ytm_table[j,9] - ytm_table[j,8])/(maturity_time[9] - maturity_time[8])
+  r_4[j]=slope_4*4 + ytm_table[j,8]- slope_4*maturity_time[8]
+  slope_5 = (ytm_table[j,11] - ytm_table[j,10])/(maturity_time[11] - maturity_time[10])
+  r_5[j]=slope_5*5 + ytm_table[j,10]- slope_5*maturity_time[10]
+}
+
+
+for (j in 1:9){
+  X_1[j]= log(r_1[j+1]/r_1[j])
+  X_2[j]= log(r_2[j+1]/r_2[j])
+  X_3[j]= log(r_3[j+1]/r_3[j])
+  X_4[j]= log(r_4[j+1]/r_4[j])
+  X_5[j]= log(r_5[j+1]/r_5[j])
+}
+
+X = cbind(X_1, X_2, X_3, X_4, X_5)
+cov_X = cov(X)
+view(X)
+
 ```
 
 ```{r}
 #find the covariance matrix for the log-returns of forward rate 
+
 ```
 
 
@@ -373,6 +413,13 @@ for (i in 1:10){
 
 ### Part b: Eigenvalue and Eigenvector of Covariance Matrix
 ```{r}
+#eigenvalue and eigenvector of Covariance Matrix for log yield
+eigen(cov_X)
+
+#eigenvalue and eigenvector of Covariance Matrix for log forward rate
+eigen(cov_F)
+
+
 
 ```
 
