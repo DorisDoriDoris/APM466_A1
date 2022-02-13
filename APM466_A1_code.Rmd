@@ -57,7 +57,7 @@ N=100
 #change the coupon rate to per 100 dollars instead of percentage
 data$`Coupon rate` = (data$`Coupon rate`)*100
 
-view(data)
+#view(data)
 
 ```
 
@@ -498,24 +498,23 @@ for (j in 1:9){
 
 X = cbind(X_1, X_2, X_3, X_4, X_5)
 cov_X = cov(X)
-
+cov_X
 ```
 
 ```{r}
 #find the covariance matrix for forward rate 
-F = cbind(Forward[,1], Forward[,2], Forward[,3], Forward[,4])
 cov_F = cov(Forward)
 cov_F
 ```
-
-
-
 
 ### Part b: Eigenvalue and Eigenvector of Covariance Matrix
 ```{r}
 #eigenvalue and eigenvector of Covariance Matrix for log yield
 eigen(cov_X)
+(transpose <- t(eigen(cov_X)$vectors))
+
 #eigenvalue and eigenvector of Covariance Matrix for log forward rate
 eigen(cov_F)
+(transpose <- t(eigen(cov_F)$vectors))
 ```
 
